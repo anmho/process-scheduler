@@ -33,11 +33,11 @@ func (rl *ReadyList) Running() (int, error) {
 
 	for i := rl.levels - 1; i >= 0; i-- {
 		if rl.ready[i].Front() != nil {
-			if pid, ok := rl.ready[i].Front().Value.(int); !ok {
+			pid, ok := rl.ready[i].Front().Value.(int)
+			if !ok {
 				panic("type assertion failed")
-			} else {
-				return pid, nil
 			}
+			return pid, nil
 		}
 	}
 
@@ -72,7 +72,7 @@ func (rl *ReadyList) isValidPriority(priority int) bool {
 	return priority >= 0 && priority < rl.levels
 }
 
-func (rl *ReadyList) TimerInterrupt(pid int, priority int) error {
+func (rl *ReadyList) Remove(pid int, priority int) error {
 	// find and remove it from the list
 	if !rl.isValidPriority(priority) {
 		return errors.New("invalid priority level")
@@ -81,12 +81,15 @@ func (rl *ReadyList) TimerInterrupt(pid int, priority int) error {
 	var head = rl.ready[priority].Front()
 
 	for cur := head; cur != nil; cur = cur.Next() {
-		var cur_pid = head.Value.(int)
-		if cur_pid == pid {
+		curPid, ok := head.Value.(int)
+		if !ok {
+			panic("invalid type assertion")
+		}
+		if curPid == pid {
 			//log.Printf("removing %v\n", cur)
 			val := rl.ready[priority].Remove(cur)
 			if val == nil {
-				return fmt.Errorf("removed invalid priority %d", cur_pid)
+				return fmt.Errorf("removed invalid priority %d", curPid)
 			}
 
 			return nil

@@ -1,42 +1,45 @@
 package manager
 
 import (
-	"errors"
 	"fmt"
-	"os"
-
 	"github.com/anmho/cs143b/project1/internal/process"
 	"github.com/anmho/cs143b/project1/internal/resource"
 )
 
-const maxProcs = 16
+const maxProcesses = 16
 const maxResources = 4
 
 type Manager struct {
-	ready *ReadyList
-	// waiting *list.List
-	processes *[maxProcs]*process.PCB
+	ready     *ReadyList
+	processes *[maxProcesses]*process.PCB
 	resources *[maxResources]*resource.RCB
 	created   int
 }
 
-func New(levels int, u0 int, u1 int, u2 int, u3 int) *Manager {
+func (m *Manager) initResources(u0, u1, u2, u3 int) {
+	m.resources = new([maxResources]*resource.RCB)
+	m.resources[0] = resource.New(u0)
+	m.resources[1] = resource.New(u1)
+	m.resources[2] = resource.New(u2)
+	m.resources[3] = resource.New(u3)
+}
+func New(levels, u0, u1, u2, u3 int) *Manager {
 	readyList := NewReadyList(levels)
 
-	processes := new([maxProcs]*process.PCB)
+	processes := new([maxProcesses]*process.PCB)
 	resources := new([maxResources]*resource.RCB)
 
 	m := &Manager{
-		ready: readyList,
-		// waiting: wait,
+		ready:     readyList,
 		processes: processes,
 		resources: resources,
 		created:   0,
 	}
 
+	m.initResources(u0, u1, u2, u3)
+
 	init := process.New(-1, 0, 0)
 	m.addProcess(init)
-
 	m.Scheduler()
 
 	return m
@@ -64,6 +67,7 @@ func (m *Manager) Create(priority int) {
 func (m *Manager) Destroy(pid int) error {
 	p := m.processes[pid]
 
+	// Destroy all of its children first
 	for cur := p.Children.Front(); cur != nil; cur = cur.Next() {
 		childPid := cur.Value.(int)
 		err := m.Destroy(childPid)
@@ -71,51 +75,103 @@ func (m *Manager) Destroy(pid int) error {
 			return fmt.Errorf("could not destroy pid %d: %w", childPid, err)
 		}
 	}
-	//for cur := p.Resources
-	cur := p.Resources.Front()
-	for cur != nil {
-		held, ok := cur.Value.(process.HeldResource)
-		if !ok {
-			panic("invalid type assertion process resource")
-		}
-		err := p.ReleaseResource(held.ResourceID, held.Units)
-		if err != nil {
-			return errors.New("could not release resource")
-		}
 
-		cur = cur.Next()
+	// Release the resources of the process
+	for resourceID := range m.resources {
+		//resourceID
+		units := p.HoldingResource(resourceID)
+		err := p.ReleaseResource(resourceID, units)
+		if err != nil {
+			return fmt.Errorf("could not release resources of pid %d: %d %w", pid, resourceID, err)
+		}
 	}
-	//p.Resources
+
 	m.processes[pid] = nil
 	m.Scheduler()
 	return nil
 }
-func (m *Manager) Request(resource int, units int) error {
-	err := m.resources[resource].Request(units)
-	if err != nil {
-		return fmt.Errorf("could not request resource %d: %w", resource, err)
+
+func isValidResource(resourceID int) bool {
+	return resourceID >= 0 && resourceID <= maxResources
+}
+func (m *Manager) Request(resourceID int, units int) error {
+	if !isValidResource(resourceID) {
+		return fmt.Errorf("invalid resource id %d", resourceID)
+	}
+	running := m.getRunning()
+	// check if we can request it before requesting
+
+	resource := m.resources[resourceID]
+
+	if resource.Available >= units {
+		err := resource.Request(units)
+		if err != nil {
+			return fmt.Errorf("requesting units: %w", err)
+		}
+		running.AddResource(resourceID, units)
+	} else {
+		running.State = process.WaitingState
+		// remove it from the ready list and put it on the waiting list
+		err := m.ready.Remove(running.Pid, running.Priority)
+		if err != nil {
+			return fmt.Errorf("removing %d from ready list: %w", running.Pid, err)
+		}
+		resource.Waitlist.PushBack(running.Pid)
 	}
 
 	m.Scheduler()
 	return nil
 }
 
-func (m *Manager) Release(resource int, units int) {
+func (m *Manager) Release(resourceID int, units int) error {
+	if !isValidResource(resourceID) {
+		return fmt.Errorf("invalid resource id %d", resourceID)
+	}
+	var err error
+	// release the resources from the process
+	running := m.getRunning()
+	resource := m.resources[resourceID]
+
+	err = running.ReleaseResource(resourceID, units)
+	if err != nil {
+		return fmt.Errorf("could not release resources of pid %d: %d %w", resourceID, units, err)
+	}
+
+	// add them back to the resourceID pool
+	err = resource.Release(units)
+	if err != nil {
+		return fmt.Errorf("could not release %d units of resources resourceID %d: %w", units, resourceID, err)
+	}
+
+	//cur := resource.Waitlist.Waiting.Front()
+	//for resource.Waitlist.Waiting.Front() != nil && resource.Available > 0 {
+	//
+	//	pid, ok := cur.Value.(int)
+	//	if !ok {
+	//		panic("invalid type assertion")
+	//	}
+	//
+	//
+	//	cur = cur.Next()
+	//}
+
 	m.Scheduler()
+	return nil
 }
 
 func (m *Manager) Timeout() error {
+	var err error
 
-	// move it from the front of the readylist to the back
 	running := m.getRunning()
-	//log.Println("removing", running.Pid)
-	err := m.ready.TimerInterrupt(running.Pid, running.Priority)
+	err = m.ready.Remove(running.Pid, running.Priority)
 	if err != nil {
 		return fmt.Errorf("manager timeout error: %w", err)
 	}
 
-	//m.ready.Print()
-	m.ready.Add(running.Pid, running.Priority)
+	err = m.ready.Add(running.Pid, running.Priority)
+	if err != nil {
+		return fmt.Errorf("manager timeout error when adding running process to back of readylist: %w", err)
+	}
 
 	m.Scheduler()
 	return nil
@@ -128,7 +184,7 @@ func (m *Manager) Scheduler() {
 		return
 	}
 
-	fmt.Fprintf(os.Stdout, "%d ", pid)
+	fmt.Printf("%d ", pid)
 }
 
 func (m *Manager) getRunning() *process.PCB {

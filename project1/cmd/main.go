@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -23,7 +22,6 @@ func main() {
 		err := execCmd(args, &m)
 		if err != nil {
 			fmt.Printf("%d ", -1)
-			log.Println("%s\n", err.Error())
 		}
 	}
 }
@@ -98,6 +96,7 @@ func execCmd(args []string, m **manager.Manager) error {
 		(*m).Create(priority)
 
 	case "de":
+		var err error
 		// de <i>
 		// destroy process i and all of its descendants
 		if len(args) != 2 {
@@ -109,7 +108,10 @@ func execCmd(args []string, m **manager.Manager) error {
 			return errors.New("invalid value for de <i>")
 		}
 
-		(*m).Destroy(pid)
+		err = (*m).Destroy(pid)
+		if err != nil {
+			return fmt.Errorf("could not destroy pid %d: %w", pid, err)
+		}
 	case "rq":
 		// Request
 		// rq <r> <k>
@@ -122,7 +124,7 @@ func execCmd(args []string, m **manager.Manager) error {
 		if len(args) != 3 {
 			return errors.New("invalid num args for rq")
 		}
-		resourceNum, err := strconv.Atoi(args[1])
+		resourceID, err := strconv.Atoi(args[1])
 		if err != nil {
 			return errors.New("invalid value for r")
 		}
@@ -130,7 +132,10 @@ func execCmd(args []string, m **manager.Manager) error {
 		if err != nil {
 			return errors.New("invalid value for k")
 		}
-		(*m).Request(resourceNum, units)
+		err = (*m).Request(resourceID, units)
+		if err != nil {
+			return fmt.Errorf("could not request %d units of resource %d %w", resourceID, units, err)
+		}
 	case "rl":
 		// Release
 		// rl <r> <k>
@@ -140,7 +145,7 @@ func execCmd(args []string, m **manager.Manager) error {
 			return errors.New("invalid num args for rl <r> <k>")
 		}
 
-		resourceNum, err := strconv.Atoi(args[1])
+		resourceID, err := strconv.Atoi(args[1])
 		if err != nil {
 			return errors.New("invalid value for <r>")
 		}
@@ -149,7 +154,10 @@ func execCmd(args []string, m **manager.Manager) error {
 			return errors.New("invalid value for <k>")
 		}
 
-		(*m).Release(resourceNum, units)
+		err = (*m).Release(resourceID, units)
+		if err != nil {
+			return fmt.Errorf("could not release resource %d %w", resourceID, err)
+		}
 	case "to":
 		// Invoke the timer interrupt
 		err := (*m).Timeout()

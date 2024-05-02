@@ -20,7 +20,7 @@ func TestAdd(t *testing.T) {
 	var err error
 	rl := NewReadyList(3)
 
-	// Add first process
+	// PushBack first process
 	err = rl.Add(0, 0)
 
 	assert.Nil(err)
@@ -29,7 +29,7 @@ func TestAdd(t *testing.T) {
 	assert.True(ok)
 	assert.Equal(pid, 0)
 
-	// Add a second process
+	// PushBack a second process
 	err = rl.Add(1, 1)
 
 	assert.Nil(err)

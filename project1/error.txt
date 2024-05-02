@@ -1,5 +1,10 @@
-2024/04/30 22:45:56 removing &{0x1400007e3c0 0x1400007e120 0x1400007e120 1}
-2024/04/30 22:45:56 removing &{0x1400007e4b0 0x1400007e120 0x1400007e120 2}
-2024/04/30 22:45:56 removing &{0x1400007e540 0x1400007e120 0x1400007e120 3}
-2024/04/30 22:45:56 removing &{0x1400007e5a0 0x1400007e120 0x1400007e120 1}
-2024/04/30 22:45:56 removing &{0x1400007e630 0x1400007e120 0x1400007e120 2}
+panic: runtime error: invalid memory address or nil pointer dereference
+[signal SIGSEGV: segmentation violation code=0x2 addr=0x8 pc=0x10501e498]
+
+goroutine 1 [running]:
+github.com/anmho/cs143b/project1/internal/manager.(*Manager).Request(0x1400007e180, 0x3, 0x1)
+	/Users/andrewho/repos/school/cs143b/project1/internal/manager/manager.go:101 +0x48
+main.execCmd({0x1400007e5a0, 0x6?, 0x105043630?}, 0x1400007ae58)
+	/Users/andrewho/repos/school/cs143b/project1/cmd/main.go:133 +0x630
+main.main()
+	/Users/andrewho/repos/school/cs143b/project1/cmd/main.go:23 +0xac

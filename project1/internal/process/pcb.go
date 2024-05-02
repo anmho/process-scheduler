@@ -17,13 +17,8 @@ type PCB struct {
 	Priority  int
 	State     State
 	Parent    int
-	Children  *list.List // double linked list of indexes
-	Resources *list.List // double linked list of indexes
-}
-
-type HeldResource struct {
-	ResourceID int
-	Units      int
+	Children  *list.List  // double linked list of indexes
+	resources map[int]int // double linked list of indexes
 }
 
 func New(parent int, pid int, priority int) *PCB {
@@ -33,7 +28,7 @@ func New(parent int, pid int, priority int) *PCB {
 		State:     ReadyState,
 		Parent:    parent,
 		Children:  list.New(),
-		Resources: list.New(),
+		resources: make(map[int]int),
 	}
 }
 
@@ -42,35 +37,19 @@ func (p *PCB) AddChild(pid int) {
 }
 
 func (p *PCB) AddResource(resourceID int, units int) {
-	held := &HeldResource{resourceID, units}
-	p.Resources.PushBack(held)
+	//p.resources.PushBack(held)
+	p.resources[resourceID] += units
+}
+
+func (p *PCB) HoldingResource(resourceID int) int {
+	return p.resources[resourceID]
 }
 
 func (p *PCB) ReleaseResource(resourceID int, units int) error {
-
-	cur := p.Resources.Front()
-
-	for cur != nil {
-		held, ok := cur.Value.(*HeldResource)
-		if !ok {
-			return errors.New("invalid type assertion")
-		}
-
-		if held.ResourceID == resourceID {
-			if units > held.Units {
-				return errors.New("attempting to release more Units than is held")
-			}
-
-			if held.Units == units {
-				p.Resources.Remove(cur)
-				break
-			} else {
-				held.Units -= units
-				break
-			}
-		}
-
-		cur = cur.Next()
+	if p.resources[resourceID] < units {
+		return errors.New("not enough resources to release")
 	}
+
+	p.resources[resourceID] -= units
 	return nil
 }

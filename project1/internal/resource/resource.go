@@ -1,36 +1,39 @@
 package resource
 
 import (
-	"container/list"
 	"errors"
 )
 
 type RCB struct {
-	free           bool
-	state          int // number of units available
-	totalInventory int
-	waitlist       *list.List
+	Available      int // number of units available
+	TotalInventory int
+	Waitlist       *Waitlist
 }
 
 func New(inventory int) *RCB {
-	waitlist := list.New()
+	waitlist := NewWaitlist()
 	return &RCB{
-		free:           true,
-		state:          inventory, // all are free at the start
-		totalInventory: inventory,
-		waitlist:       waitlist,
+		Available:      inventory, // all are Free at the start
+		TotalInventory: inventory,
+		Waitlist:       waitlist,
 	}
 }
 
 func (r *RCB) Request(units int) error {
-	if units > r.state {
+	if units > r.Available {
 		return errors.New("not enough resources")
 	}
 
-	r.state -= units
+	r.Available -= units
 	return nil
 }
 
-func (r *RCB) Release(units int) {
-	r.state
+// Release Processes resource request from process pid
+func (r *RCB) Release(units int) error {
+	if r.Available+units > r.TotalInventory {
+		return errors.New("not enough resources")
+	}
+	r.Available += units
+
+	return nil
 }
