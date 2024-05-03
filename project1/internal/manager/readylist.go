@@ -82,24 +82,6 @@ func (rl *ReadyList) Remove(pid int, priority int) error {
 		return errors.New("invalid priority level")
 	}
 
-	//var head = rl.Ready[priority].Front()
-	//for cur := head; cur != nil; cur = cur.Next() {
-	//	curPid, ok := head.Value.(int)
-	//	if !ok {
-	//		panic("invalid type assertion")
-	//	}
-	//	if curPid == pid {
-	//		log.Printf("removing %v\n", cur)
-	//		val := rl.Ready[priority].Remove(cur)
-	//		if val == nil {
-	//			return fmt.Errorf("removed invalid priority %d", curPid)
-	//		}
-	//
-	//		return nil
-	//	}
-	//}
-	//
-	//return nil
 	cur := rl.Ready[priority].Front()
 	for cur != nil {
 		//log.Printf("ready prio %d: %d\n", proc.Priority, cur.Value.(int))

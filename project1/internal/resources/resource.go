@@ -31,7 +31,7 @@ func (r *RCB) Request(units int) error {
 // Release Processes resources request from process Pid
 func (r *RCB) Release(units int) error {
 	if r.available+units > r.TotalInventory {
-		return errors.New("not enough resources")
+		return errors.New("releasing amount greater than inventory")
 	}
 	r.available += units
 

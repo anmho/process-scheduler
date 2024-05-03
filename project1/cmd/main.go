@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -24,8 +23,8 @@ func main() {
 			args := strings.Split(line, " ")
 			err := execCmd(args, &m)
 			if err != nil {
-				log.Printf("cmd %s error: %w\n", args[0], err)
-				fmt.Printf("%d \n", -1)
+				//log.Printf("cmd %s error: %w\n", args[0], err)
+				fmt.Printf("%d ", -1)
 			}
 		}
 	}
@@ -89,6 +88,9 @@ func execCmd(args []string, m **manager.Manager) error {
 		}
 		*m = manager.NewDefault()
 	case "cr":
+		if *m == nil {
+			return errors.New("m is nil")
+		}
 		// cr <p>
 		// Create child process for running process at priority level p
 		if len(args) != 2 {
@@ -104,6 +106,9 @@ func execCmd(args []string, m **manager.Manager) error {
 			return err
 		}
 	case "de":
+		if *m == nil {
+			return errors.New("m is nil")
+		}
 		var err error
 		// de <i>
 		// destroy process i and all of its descendants
@@ -122,6 +127,9 @@ func execCmd(args []string, m **manager.Manager) error {
 			return fmt.Errorf("could not destroy pid %d: %w", pid, err)
 		}
 	case "rq":
+		if *m == nil {
+			return errors.New("m is nil")
+		}
 		// Request
 		// rq <r> <k>
 		// Invoke the function request(), which requests <k> units of resources <r>;
@@ -150,6 +158,9 @@ func execCmd(args []string, m **manager.Manager) error {
 		// rl <r> <k>
 		// Invoke the function release(), which release the resources <r>;
 		// <r> can be 0, 1, 2, or 3; <k> is the number of units to be released
+		if *m == nil {
+			return errors.New("m is nil")
+		}
 		if len(args) != 3 {
 			return errors.New("invalid num args for rl <r> <k>")
 		}
@@ -168,6 +179,9 @@ func execCmd(args []string, m **manager.Manager) error {
 			return fmt.Errorf("could not release resources %d %w", resourceID, err)
 		}
 	case "to":
+		if *m == nil {
+			return errors.New("m is nil")
+		}
 		// Invoke the timer interrupt
 		err := (*m).Timeout()
 		if err != nil {
