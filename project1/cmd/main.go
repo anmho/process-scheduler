@@ -20,8 +20,6 @@ func main() {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		//log.Printf("\nexecuting %s\n", args[0])
-		//if len(args) > 0 {
 		if len(line) > 0 {
 			args := strings.Split(line, " ")
 			err := execCmd(args, &m)
