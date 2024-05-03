@@ -24,8 +24,8 @@ func TestAdd(t *testing.T) {
 	err = rl.Add(0, 0)
 
 	assert.Nil(err)
-	assert.Equal(rl.ready[0].Len(), 1)
-	pid, ok = rl.ready[0].Front().Value.(int)
+	assert.Equal(rl.Ready[0].Len(), 1)
+	pid, ok = rl.Ready[0].Front().Value.(int)
 	assert.True(ok)
 	assert.Equal(pid, 0)
 
@@ -33,8 +33,8 @@ func TestAdd(t *testing.T) {
 	err = rl.Add(1, 1)
 
 	assert.Nil(err)
-	assert.Equal(rl.ready[1].Len(), 1)
-	pid, ok = rl.ready[1].Front().Value.(int)
+	assert.Equal(rl.Ready[1].Len(), 1)
+	pid, ok = rl.Ready[1].Front().Value.(int)
 	assert.True(ok)
 	assert.Equal(pid, 1)
 
@@ -51,12 +51,12 @@ func TestGetRunning(t *testing.T) {
 	rl := NewReadyList(3)
 
 	// pid 0
-	rl.ready[0].PushBack(0)
+	rl.Ready[0].PushBack(0)
 	pid, err = rl.Running()
 	assert.Nil(err)
 	assert.Equal(pid, 0)
 
-	rl.ready[1].PushBack(1)
+	rl.Ready[1].PushBack(1)
 	pid, err = rl.Running()
 
 	// pid 1
@@ -64,21 +64,21 @@ func TestGetRunning(t *testing.T) {
 	assert.Equal(pid, 1)
 
 	// pid 2
-	rl.ready[1].PushBack(2)
+	rl.Ready[1].PushBack(2)
 	pid, err = rl.Running()
 
 	assert.Nil(err)
 	assert.Equal(pid, 1)
 
 	// pid 3
-	rl.ready[1].PushBack(3)
+	rl.Ready[1].PushBack(3)
 	pid, err = rl.Running()
 
 	assert.Nil(err)
 	assert.Equal(pid, 1)
 
 	// pid 3
-	rl.ready[1].PushBack(3)
+	rl.Ready[1].PushBack(3)
 	pid, err = rl.Running()
 
 	assert.Nil(err)

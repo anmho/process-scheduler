@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -18,10 +19,16 @@ func main() {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		args := strings.Split(line, " ")
-		err := execCmd(args, &m)
-		if err != nil {
-			fmt.Printf("%d ", -1)
+
+		//log.Printf("\nexecuting %s\n", args[0])
+		//if len(args) > 0 {
+		if len(line) > 0 {
+			args := strings.Split(line, " ")
+			err := execCmd(args, &m)
+			if err != nil {
+				log.Printf("cmd %s error: %w\n", args[0], err)
+				fmt.Printf("%d \n", -1)
+			}
 		}
 	}
 }
@@ -31,14 +38,16 @@ func execCmd(args []string, m **manager.Manager) error {
 		return errors.New("m is nil")
 	}
 
+	//fmt.Println(args)
+
 	switch args[0] {
 	case "in":
 		// in <n> <u0> <u1> <u2> <u3>
 		// Initialize with n priority levels in readyList
-		// inventory of u0 for resource 0
-		// inventory of u1 for resource 1
-		// inventory of u2 for resource 2
-		// inventory of u3 for resource 3
+		// inventory of u0 for resources 0
+		// inventory of u1 for resources 1
+		// inventory of u2 for resources 2
+		// inventory of u3 for resources 3
 		if len(args) != 6 {
 			return errors.New("invalid number of arguments")
 		}
@@ -80,7 +89,6 @@ func execCmd(args []string, m **manager.Manager) error {
 		if *m != nil {
 			fmt.Println()
 		}
-		fmt.Println()
 		*m = manager.NewDefault()
 	case "cr":
 		// cr <p>
@@ -93,12 +101,15 @@ func execCmd(args []string, m **manager.Manager) error {
 		if err != nil {
 			return errors.New("invalud value for p for cr <p>")
 		}
-		(*m).Create(priority)
-
+		err = (*m).Create(priority)
+		if err != nil {
+			return err
+		}
 	case "de":
 		var err error
 		// de <i>
 		// destroy process i and all of its descendants
+
 		if len(args) != 2 {
 			return errors.New("not enough args for de")
 		}
@@ -115,11 +126,11 @@ func execCmd(args []string, m **manager.Manager) error {
 	case "rq":
 		// Request
 		// rq <r> <k>
-		// Invoke the function request(), which requests <k> units of resource <r>;
+		// Invoke the function request(), which requests <k> units of resources <r>;
 		// <r> can be 0, 1, 2, or 3.
 
 		// if it results in a deadlock or there are not enough units then print -1
-		// Invoke the function request(), which requests <k> units of resource <r>;
+		// Invoke the function request(), which requests <k> units of resources <r>;
 		// <r> can be 0, 1, 2, or 3.
 		if len(args) != 3 {
 			return errors.New("invalid num args for rq")
@@ -134,12 +145,12 @@ func execCmd(args []string, m **manager.Manager) error {
 		}
 		err = (*m).Request(resourceID, units)
 		if err != nil {
-			return fmt.Errorf("could not request %d units of resource %d %w", resourceID, units, err)
+			return fmt.Errorf("could not request %d units of resources %d %w", resourceID, units, err)
 		}
 	case "rl":
 		// Release
 		// rl <r> <k>
-		// Invoke the function release(), which release the resource <r>;
+		// Invoke the function release(), which release the resources <r>;
 		// <r> can be 0, 1, 2, or 3; <k> is the number of units to be released
 		if len(args) != 3 {
 			return errors.New("invalid num args for rl <r> <k>")
@@ -156,7 +167,7 @@ func execCmd(args []string, m **manager.Manager) error {
 
 		err = (*m).Release(resourceID, units)
 		if err != nil {
-			return fmt.Errorf("could not release resource %d %w", resourceID, err)
+			return fmt.Errorf("could not release resources %d %w", resourceID, err)
 		}
 	case "to":
 		// Invoke the timer interrupt

@@ -1,11 +1,11 @@
-package resource
+package resources
 
 import (
 	"errors"
 )
 
 type RCB struct {
-	Available      int // number of units available
+	available      int // number of Units available
 	TotalInventory int
 	Waitlist       *Waitlist
 }
@@ -13,27 +13,31 @@ type RCB struct {
 func New(inventory int) *RCB {
 	waitlist := NewWaitlist()
 	return &RCB{
-		Available:      inventory, // all are Free at the start
+		available:      inventory, // all are Free at the start
 		TotalInventory: inventory,
 		Waitlist:       waitlist,
 	}
 }
 
 func (r *RCB) Request(units int) error {
-	if units > r.Available {
+	if units > r.available {
 		return errors.New("not enough resources")
 	}
 
-	r.Available -= units
+	r.available -= units
 	return nil
 }
 
-// Release Processes resource request from process pid
+// Release Processes resources request from process Pid
 func (r *RCB) Release(units int) error {
-	if r.Available+units > r.TotalInventory {
+	if r.available+units > r.TotalInventory {
 		return errors.New("not enough resources")
 	}
-	r.Available += units
+	r.available += units
 
 	return nil
+}
+
+func (r *RCB) Available() int {
+	return r.available
 }
