@@ -35,9 +35,9 @@ func (m *Manager) updateWaitlist(resourceID, freedUnits int) error {
 				return fmt.Errorf("could not add pid %d to Ready list: %w", wu.Pid, err)
 			}
 			resource.Waitlist.Remove(wu.Pid)
-		} /* else { // why stop?
+		} else { // why stop?
 			break
-		}*/
+		}
 		cur = next
 	}
 	return nil
